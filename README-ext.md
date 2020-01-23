@@ -34,7 +34,7 @@ When done copy /tmp/custom.img from the container and upload it to your selected
 # Troubleshooting
 
 ## Ansible fails loading yaml
-Error- ModuleNotFoundError: No module named 'yaml'
+Error: `ModuleNotFoundError: No module named 'yaml'`
 
 Install pyyaml, and make sure ansible will look on its location with the following export.
 ```
