@@ -4,14 +4,15 @@
 
 CUSTOM_IMAGE=${CUSTOM_IMAGE:-"0"}
 PROVISION_MODE=${PROVISION_MODE:-"0"}
-REPO_FILE=${REPO_FILE:-"0"}
-
-export KUBECONFIG=/root/install/auth/kubeconfig
+REPO_FILE=${REPO_FILE:-"ocp_43.repo"}
+CONTAINER_MODE=${CONTAINER_MODE:-"1"}
 
 SELF_PID=$(echo $$)
 ps -ef | grep scale.sh | grep -v grep | awk '{print $2}' | grep -v $SELF_PID | xargs kill
 pkill dnf
 pkill ansible-playbook
+
+dnf remove -y origin-clients-3.11.1-1.fc29.x86_64
 
 if [ ! -f /root/.ssh/id_rsa.pub ]
 then
@@ -19,11 +20,21 @@ then
    ssh-keygen -t rsa -f /root/.ssh/id_rsa -N ''
 fi
 
+if [ $CONTAINER_MODE = "1" ]; then
+   export KUBECONFIG=/root/install/auth/kubeconfig
+   dnf install -y https://repo.fedora.md/centos/7/virt/x86_64/ovirt-4.2/common/ansible-2.8.2-1.el7.noarch.rpm
+else
+   dnf install -y ansible
+fi
+
 dnf install -y libguestfs-tools
-dnf install -y https://repo.fedora.md/centos/7/virt/x86_64/ovirt-4.2/common/ansible-2.8.2-1.el7.noarch.rpm
 dnf install -y openshift-ansible openshift-clients jq
 
-NETLIST=$(virsh net-list | grep -v def | grep active | awk '{print $1}')
+NETLIST=$(virsh net-list 2>/dev/null| grep -v def | grep active | awk '{print $1}')
+
+WORKER=$NETLIST-worker-1
+virsh destroy $WORKER
+virsh undefine $WORKER
 
 cd /tmp
 if [ $CUSTOM_IMAGE = "0" ] || [ $PROVISION_MODE = "1" ]; then
@@ -64,8 +75,12 @@ run_ssh "echo 'options kvm-intel nested=1' >> /etc/modprobe.d/dist.conf"
 run_ssh modprobe kvm-intel
 
 # Add vagrant public key
-vagrant_pub_key=$(ssh-keygen -y -f /vagrant.key)
-run_ssh "echo 'ssh-rsa $vagrant_pub_key vagrant insecure public key' >> /root/.ssh/authorized_keys"
+if [ -f /vagrant.key ]; then
+  PUB_KEY=$(ssh-keygen -y -f /vagrant.key)
+else
+  PUB_KEY=$(cat /root/.ssh/id_rsa.pub)
+fi
+run_ssh "echo $PUB_KEY >> /root/.ssh/authorized_keys"
 
 # Add core user
 CMDS=$(cat <<__EOF__
@@ -79,7 +94,7 @@ __EOF__
 
 run_ssh "$CMDS"
 
-cp $KUBECONFIG /tmp
+cp $KUBECONFIG /tmp/kubeconfig
 master_ip="192.168.126.11"
 sed -i "s/127.0.0.1/$master_ip/" /tmp/kubeconfig
 
@@ -91,7 +106,6 @@ openshift_kubeconfig_path="/tmp/kubeconfig"
 [new_workers]
 $IP
 EOF
-
 
 cd /usr/share/ansible/openshift-ansible
 if [ $PROVISION_MODE = "1" ]; then
@@ -145,5 +159,3 @@ else
 
   ansible-playbook -i inventory/hosts playbooks/scaleup.yml --skip-tags=skipme
 fi
-
-rm -rf /etc/yum.repos.d/$REPO_FILE
