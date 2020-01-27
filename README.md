@@ -52,6 +52,7 @@ When done copy /tmp/custom.img from the container and upload it to your selected
 Error: `ModuleNotFoundError: No module named 'yaml'`
 
 Install pyyaml, and make sure ansible will look on its location with the following export.
+(for other python versions, use `pip3 show pyyaml` to see what is the location)
 ```
 pip3 install pyyaml
 export PYTHONPATH=/usr/local/lib64/python3.7/site-packages:$PYTHONPATH
