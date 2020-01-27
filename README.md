@@ -44,7 +44,8 @@ export REPO_FILE=<FILL_HERE>
 export PROVISION_MODE=1
 make scale-up
 ```
-When done copy /tmp/custom.img from the container and upload it to your selected server (\$BASE_URL/$CUSTOM_IMAGE)
+When done copy /tmp/custom.img from the container and upload it to your selected server (\$BASE_URL/$CUSTOM_IMAGE).
+Update the md5 hash of the image at scale-up.sh.
 
 # Troubleshooting
 
