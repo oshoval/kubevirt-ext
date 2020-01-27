@@ -1,11 +1,26 @@
 # Scale up target
 
+Scale up support containerized mode, which is suitable for kubevirtci providers.
+And non containerized mode where the nodes are either vms on the machines or bare metal hosts.
+
+Using containerized mode:
 ```
 export KUBEVIRT_PROVIDER=ocp-4.3
-export KUBECONFIG=$(./cluster-up/kubeconfig.sh)
-export CUSTOM_IMAGE=worker.img 
+export KUBECONFIG=$(./cluster-up/kubeconfig.sh) # if used within kubevirtci folder, can use kubeconfig.sh
+export CUSTOM_IMAGE=worker.img # pre provisioned qcow file name
 export REPO_FILE=<FILL_HERE> # .repo file needed in order to install openshift packages
 export BASE_URL=<FILL_HERE> # URL where CUSTOM_IMAGE can be found
+
+make scale-up
+```
+
+Using non containerized mode:
+```
+export KUBEVIRT_PROVIDER=ocp-4.3
+export KUBECONFIG=<FILL_HERE>
+export REPO_FILE=<FILL_HERE> # .repo file needed in order to install openshift packages
+export BASE_URL=<FILL_HERE> # URL where BASE_IMG qcow can be found (see scale-up.sh)
+export CONTAINER_MODE=0
 
 make scale-up
 ```
@@ -24,7 +39,7 @@ make cluster-up
 Run scale-up with provision_mode
 (ocp repo file should have the needed repos required by the script and the ansible playbook scaleup.yml)
 ```
-export KUBECONFIG=$(./cluster-up/kubeconfig.sh)
+export KUBECONFIG=<FILL_HERE>
 export REPO_FILE=<FILL_HERE>
 export PROVISION_MODE=1
 make scale-up
@@ -38,6 +53,6 @@ Error: `ModuleNotFoundError: No module named 'yaml'`
 
 Install pyyaml, and make sure ansible will look on its location with the following export.
 ```
-export PYTHONPATH=/usr/local/lib64/python3.7/site-packages:$PYTHONPATH
 pip3 install pyyaml
+export PYTHONPATH=/usr/local/lib64/python3.7/site-packages:$PYTHONPATH
 ```
