@@ -1,5 +1,8 @@
 # Scale up target
 
+Based on
+https://docs.openshift.com/container-platform/4.3/machine_management/adding-rhel-compute.html
+
 Scale up support containerized mode, which is suitable for kubevirtci providers.
 And non containerized mode where the nodes are either vms or bare metal hosts.
 
